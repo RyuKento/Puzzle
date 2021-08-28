@@ -9,15 +9,4 @@ public class GameManager : MonoBehaviour
     {
         SceneManager.LoadScene("Puzzle");
     }
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

@@ -9,15 +9,16 @@ public class Birds : MonoBehaviour
     public GameObject[] birdPrefabs,allBirdsList,allStarList;
     public GameObject m_star,m_starCopy;
     public Text m_allDepop;
-    public int allBirdsCount;
-    public float duration = 0.5f, currentTime = 0f;
+    public int m_allBirdsCount,m_maxBirdCount;
+    public float m_duration = 0.5f, m_currentTime = 0f;
     public static int m_score;
 
-    [SerializeField] private float removeBirdMinCount = 3,birdDistance = 1.6f;
+    [SerializeField] private float m_birdDistance = 5f;
+    [SerializeField] private int m_removeBirdMinCount = 3, m_removeBiradMaxCount = 7, m_triggerStarCount = 2;
     [SerializeField] Text m_scoreBox;
 
     private GameObject firstBird,lastBird;
-    private string currentName;
+    private string m_currentName;
     List<GameObject> removableBirdList = new List<GameObject>(),ExplosionList = new List<GameObject>();
     // Start is called before the first frame update
     void Start()
@@ -32,7 +33,7 @@ public class Birds : MonoBehaviour
                 {
                     firstBird = hitObj;
                     lastBird = hitObj;
-                    currentName = hitObj.name;
+                    m_currentName = hitObj.name;
                     removableBirdList = new List<GameObject>();
                     PushToBirdList(hitObj);
                 }
@@ -42,7 +43,7 @@ public class Birds : MonoBehaviour
                     lastBird = hitObj;
                     ExplosionList = new List<GameObject>();
                     m_star = hitObj;
-                    currentName = hitObj.name;
+                    m_currentName = hitObj.name;
                     PushToStar(hitObj);
 
                 }
@@ -59,20 +60,20 @@ public class Birds : MonoBehaviour
             if (hit.collider)
             {
                 GameObject hitObj = hit.collider.gameObject;
-                if(hitObj.tag == "Bird" && hitObj.name==currentName && hitObj!=lastBird&&0> removableBirdList.IndexOf(hitObj))
+                if(hitObj.tag == "Bird" && hitObj.name==m_currentName && hitObj!=lastBird&&0> removableBirdList.IndexOf(hitObj))
                 {
                     float distance = Vector2.Distance(hitObj.transform.position,
                         lastBird.transform.position);
-                    if(distance > birdDistance)
+                    if(distance > m_birdDistance)
                     {
                         return;
                     }
                     lastBird = hitObj;
                     PushToBirdList(hitObj);
-                }else if(hitObj.tag == "Star" && hitObj.name == currentName && hitObj != lastBird && 0 > removableBirdList.IndexOf(hitObj))
+                }else if(hitObj.tag == "Star" && hitObj.name == m_currentName && hitObj != lastBird && 0 > removableBirdList.IndexOf(hitObj))
                 {
                     float distance = Vector2.Distance(hitObj.transform.position, lastBird.transform.position);
-                    if(distance > birdDistance)
+                    if(distance > m_birdDistance)
                     {
                         return;
                     }
@@ -86,7 +87,7 @@ public class Birds : MonoBehaviour
         {
             int removeCount = removableBirdList.Count;
             int starCount = ExplosionList.Count; 
-            if(removeCount >= removeBirdMinCount && 7 > removeCount)
+            if(removeCount >= m_removeBirdMinCount && m_removeBiradMaxCount > removeCount)
             {
                 AddtionalPoints(removeCount);
                 foreach(GameObject obj in removableBirdList)
@@ -95,7 +96,7 @@ public class Birds : MonoBehaviour
                 }
                 StartCoroutine(DropBirds(removeCount));
             }
-            else if(removeCount >= 7)
+            else if(removeCount >= m_removeBiradMaxCount)
             {
                 AddtionalPoints(removeCount);
                 foreach(GameObject obj in removableBirdList)
@@ -105,17 +106,14 @@ public class Birds : MonoBehaviour
                 StartCoroutine(DropStar(1));
                 StartCoroutine(DropBirds(removeCount));
             }
-            else if (starCount >= 2)
+            else if (starCount >= m_triggerStarCount)
             {
-
-                foreach (GameObject obje in allBirdsList)
-                {
-                    Destroy(obje);
-                }
+                AllPoints();
                 foreach (GameObject objec in ExplosionList)
                 {
                     Destroy(objec);
                 }
+                StartCoroutine(AllDestroy());
                 m_star = m_starCopy;
                 StartCoroutine(PopText());
                 StartCoroutine(DropBirds(40));
@@ -183,7 +181,6 @@ public class Birds : MonoBehaviour
             Vector2 pos = new Vector2(Random.Range(-7f, 7f), 13.5f);
 
             int id = Random.Range(0, birdPrefabs.Length);
-            Debug.Log(id,this.gameObject);
             GameObject bird = (GameObject)Instantiate(birdPrefabs[id],
                 pos,
                 Quaternion.AngleAxis(Random.Range(-40, 40), Vector3.forward));
@@ -206,15 +203,15 @@ public class Birds : MonoBehaviour
     {
         float alpha = 1;
         Color color = new Color(0, 0, 0, alpha);
-        currentTime = 0f;
+        m_currentTime = 0f;
         m_allDepop.color = color;
         m_allDepop.text = "ナイスぜんけし！";
         do
         {
             yield return null;
 
-            currentTime += Time.unscaledDeltaTime;
-            alpha = 1 - (currentTime / duration);
+            m_currentTime += Time.unscaledDeltaTime;
+            alpha = 1 - (m_currentTime / m_duration);
             if (alpha < 0)
             {
                 alpha = 0;
@@ -222,20 +219,20 @@ public class Birds : MonoBehaviour
             color.a = alpha;
             m_allDepop.color = color;
         }
-        while (currentTime <= duration);
+        while (m_currentTime <= m_duration);
     }
     IEnumerator DepopText() 
     {
         yield return new WaitForSeconds(0.5f);
         float alpha = 0;
         Color color = new Color(0, 0, 0, alpha);
-        currentTime = 0;
+        m_currentTime = 0;
         m_allDepop.color = color;
         do
         {
             yield return null;
-            currentTime += Time.unscaledDeltaTime;
-            alpha = currentTime / duration;
+            m_currentTime += Time.unscaledDeltaTime;
+            alpha = m_currentTime / m_duration;
             if (alpha > 1)
             {
                 alpha = 1;
@@ -243,8 +240,18 @@ public class Birds : MonoBehaviour
             color.a = alpha;
             m_allDepop.color = color;
         }
-        while (currentTime <= duration);
+        while (m_currentTime <= m_duration);
         m_allDepop.text = "";
+    }
+
+    IEnumerator AllDestroy()
+    {
+
+        foreach (GameObject obje in allBirdsList)
+        {
+            yield return new WaitForSeconds(0.03f);
+            Destroy(obje);
+        }
     }
 }
 
